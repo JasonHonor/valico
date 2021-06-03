@@ -46,6 +46,33 @@ impl Builder {
         &self.optional
     }
 
+    pub fn get_defined(&mut self)-> Vec<param::Param> {
+        let mut ret:Vec<param::Param> = vec![];
+        ret.append(&mut self.requires);
+        ret.append(&mut self.optional);
+        ret
+    }
+
+    pub fn is_defined(&self,node:String)-> bool {
+        let mut  bIsDefined = false;
+
+        for item in &self.requires {
+            if item.name == node {
+                bIsDefined=true;
+                break;
+            }
+        }
+
+        for item in &self.optional {
+            if item.name == node {
+                bIsDefined=true;
+                break;
+            }
+        }
+
+        bIsDefined
+    }
+
     pub fn get_validators(&self) -> &validators::Validators {
         &self.validators
     }
@@ -57,6 +84,12 @@ impl Builder {
 
     pub fn req_typed(&mut self, name: &str, coercer: Box<dyn coercers::Coercer + Send + Sync>) {
         let params = param::Param::new_with_coercer(name, coercer);
+        self.requires.push(params);
+    }
+
+    pub fn req_typed_nullable(&mut self, name: &str, coercer: Box<dyn coercers::Coercer + Send + Sync>) {
+        let mut params = param::Param::new_with_coercer(name, coercer);
+        params.allow_null();
         self.requires.push(params);
     }
 
@@ -243,6 +276,24 @@ impl Builder {
 
         {
             let object = val.as_object_mut().expect("We expect object here");
+            let keys = object.keys();
+
+            let mut unknown_keys:Vec<&String> = vec![];
+
+            for key in keys {
+               if !self.is_defined(key.to_string()) {
+                   unknown_keys.push(key);
+                   state.errors.push(Box::new(errors::WrongValue {
+                       path: key.to_string(),
+                       detail: None
+                   }))
+               }
+            }
+
+            if unknown_keys.len() >0 {
+                println!("unknown keys count = {}",unknown_keys.len());
+            }
+
             for param in self.requires.iter() {
                 let name = &param.name;
                 let present = object.contains_key(name);

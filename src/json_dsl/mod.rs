@@ -59,6 +59,10 @@ pub fn object() -> Box<dyn coercers::Coercer + Send + Sync> {
     Box::new(coercers::ObjectCoercer)
 }
 
+pub fn date() -> Box<dyn coercers::Coercer + Send + Sync> {
+    Box::new(coercers::DateCoercer)
+}
+
 pub struct ExtendedResult<T> {
     value: T,
     state: json_schema::ValidationState,

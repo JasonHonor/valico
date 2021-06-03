@@ -1,4 +1,7 @@
 use serde_json::{to_string, to_value, Value};
+extern crate chrono;
+use chrono::prelude::*;
+use chrono::format::ParseResult;
 
 use super::errors;
 
@@ -13,6 +16,7 @@ pub enum PrimitiveType {
     Null,
     Array,
     Object,
+    Date,
     // Reserved for future use in Rustless
     File,
 }
@@ -323,6 +327,62 @@ impl Coercer for ObjectCoercer {
             Err(vec![Box::new(errors::WrongType {
                 path: path.to_string(),
                 detail: "Can't coerce non-object value to the object type".to_string(),
+            })])
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct DateCoercer;
+
+impl Coercer for DateCoercer {
+    fn get_primitive_type(&self) -> PrimitiveType {
+        PrimitiveType::Date
+    }
+    fn coerce(&self, val: &mut Value, path: &str) -> CoercerResult<Option<Value>> {
+        if val.is_string() {
+
+            let mut bIsDate =false;
+            let mut sError ="".to_string();
+            let sValue = val.to_string();
+
+            let t1: ParseResult<DateTime<Utc>> =
+                Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%d %H:%M:%S\"");
+
+            match t1 {
+                Ok(dt)=>{
+                    bIsDate=true;
+                },
+                Err(err)=>{
+                    sError = err.to_string();
+                }
+            }
+
+            let t2: ParseResult<DateTime<Utc>> =
+                Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%dT%H:%M:%S\"");
+
+            match t2 {
+                Ok(dt)=>{
+                    bIsDate=true;
+                },
+                Err(err)=>{
+                    sError = err.to_string();
+                }
+            }
+
+            if bIsDate {
+                Ok(None)
+            }else {
+                Err(vec![Box::new(errors::WrongType {
+                    path: path.to_string(),
+                    detail: format!("Error coerce value to date:{}-{}",sError,sValue).to_string(),
+                })])
+            }
+            //println!("t1: ParseResult<DateTime<FixedOffset>>({:?}-{})", t1,sValue);
+        } else {
+            Err(vec![Box::new(errors::WrongType {
+                path: path.to_string(),
+                detail: "Can't coerce value to date".to_string(),
             })])
         }
     }
