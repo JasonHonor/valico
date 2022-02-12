@@ -1,7 +1,9 @@
+use chrono::format::Item::Error;
 use serde_json::{to_string, to_value, Value};
 extern crate chrono;
 use chrono::prelude::*;
 use chrono::format::ParseResult;
+use url::ParseError;
 
 use super::errors;
 
@@ -346,22 +348,24 @@ impl Coercer for DateCoercer {
             let mut sError ="".to_string();
             let sValue = val.to_string();
 
-            let t1: ParseResult<DateTime<Utc>> =
-                Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%d %H:%M:%S\"");
+            let mut t1: ParseResult<DateTime<Utc>>;
 
-            match t1 {
-                Ok(dt)=>{
-                    bIsDate=true;
+            match sValue.len() {
+                14=>{
+                    t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y%m%d%H%M%S\"");
                 },
-                Err(err)=>{
-                    sError = err.to_string();
+                19=>{
+                    t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%d %H:%M:%S\"");
+                },
+                _=>{
+                    return Err(vec![Box::new(errors::WrongType {
+                        path: path.to_string(),
+                        detail: "Can't coerce value to date".to_string(),
+                    })]);
                 }
             }
 
-            let t2: ParseResult<DateTime<Utc>> =
-                Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%dT%H:%M:%S\"");
-
-            match t2 {
+            match t1 {
                 Ok(dt)=>{
                     bIsDate=true;
                 },
