@@ -351,11 +351,14 @@ impl Coercer for DateCoercer {
             let mut t1: ParseResult<DateTime<Utc>>;
 
             match sValue.len() {
-                14=>{
+                16=>{
                     t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y%m%d%H%M%S\"");
                 },
-                19=>{
+                21=>{
                     t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%d %H:%M:%S\"");
+                },
+                25=>{
+                    t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%dT%H:%M:%S%.3f\"");
                 },
                 _=>{
                     return Err(vec![Box::new(errors::WrongType {
