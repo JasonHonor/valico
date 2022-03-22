@@ -355,7 +355,7 @@ impl Coercer for DateCoercer {
                     t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y%m%d%H%M%S\"");
                 },
 		19=>{
-		   t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y%m%d%H%M%S3f\"");
+		   t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y%m%d%H%M%S%3f\"");
 		},
                 21=>{
                     t1 = Utc.datetime_from_str(sValue.as_str(), "\"%Y-%m-%d %H:%M:%S\"");
